@@ -1,0 +1,10 @@
+cluster_name = "{{environment_name}}"
+base_domain = "example.com"
+openshift_pull_secret = "./openshift_pull_secret.json"
+openshift_version = "{{_current_openshift_cluster.ocp_version}}"
+
+aws_extra_tags = {
+  "owner" = "admin"
+  }
+aws_region = "{{aws_region}}"
+aws_publish_strategy = "External"

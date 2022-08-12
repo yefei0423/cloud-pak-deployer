@@ -2,7 +2,13 @@
 - name: Download ROSA command line tool 
   include_role:
     name: aws-download-rosa
+  when: _use_rosa_to_setup_openshift is defined and _use_rosa_to_setup_openshift == True
 
 - name: Download AWS Client
   include_role:
     name: aws-download-cli
+
+- name: Download and install Terraform (for apply action)
+  include_role:
+    name: terraform-download
+  when: _use_rosa_to_setup_openshift is not defined

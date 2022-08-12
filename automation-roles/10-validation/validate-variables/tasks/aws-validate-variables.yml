@@ -25,7 +25,7 @@
 
 - name: Check if need to check rosa-login-token secret
   set_fact:
-    _need_to_check_rosa_login_token: True  
+    _use_rosa_to_setup_openshift: True  
   loop: "{{ all_config.openshift | default([]) }}"
   loop_control:
     loop_var: _current_openshift_cluster
@@ -44,5 +44,19 @@
     fail:
       msg: "Secret rosa-login-token is mandatory and was not found in the vault"
     when: secret_value==""
-  when: _need_to_check_rosa_login_token is defined and _need_to_check_rosa_login_token == True
+  when: _use_rosa_to_setup_openshift is defined and _use_rosa_to_setup_openshift == True
   
+- name: Check openshift_pull_secret secret for self-managed openshift
+  block:
+  - name: Check if openshift_pull_secret secret is in the vault
+    include_role: 
+      name: vault-get-secret
+    vars:
+      secret_name: "openshift_pull_secret"
+      secret_group: "{{ environment_name }}"
+
+  - name: Check that openshift_pull_secret secret is present in the vault
+    fail:
+      msg: "Secret openshift_pull_secret is mandatory and was not found in the vault"
+    when: secret_value==""
+  when: _use_rosa_to_setup_openshift is not defined

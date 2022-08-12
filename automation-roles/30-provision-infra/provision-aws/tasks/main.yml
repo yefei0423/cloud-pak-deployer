@@ -8,14 +8,6 @@
   fail: msg="cloud_platform {{ cloud_platform }} is not implemented, current implemented cloud platforms are {{ implemented_cloud_platform_types }} "
   when: "cloud_platform not in implemented_cloud_platform_types"
 
-- name: Download ROSA command line tool 
-  include_role:
-    name: aws-download-rosa
-
-- name: Login to ROSA
-  include_role:
-    name: aws-login-rosa
-
 - name: Get aws-access-key secret from in the vault
   include_role: 
     name: vault-get-secret
@@ -36,11 +28,42 @@
 - set_fact:
     _aws_secret_access_key: "{{ secret_value }}"
 
-- name: Provision OpenShift on AWS
-  include_tasks: provision-rosa.yml
+- name:  Get openshift_pull_secret secret from the vault
+  block:
+  - name: Read openshift_pull_secret secret from the vault
+    include_role: 
+      name: vault-get-secret
+    vars:
+      secret_name: "openshift_pull_secret"
+      secret_group: "{{ environment_name }}" 
+
+  - set_fact:
+      _openshift_pull_secret: "{{ secret_value }}"
+  when: _use_rosa_to_setup_openshift is not defined
+
+- name: Provision Managed OpenShift on AWS
+  block:
+  - name: Download ROSA command line tool 
+    include_role:
+      name: aws-download-rosa  
+
+  - name: Login to ROSA
+    include_role:
+      name: aws-login-rosa
+
+  - name: Provision OpenShift on AWS
+    include_tasks: provision-rosa.yml
+    loop: "{{ all_config.openshift | default([]) }}"
+    loop_control:
+      loop_var: _current_openshift_cluster
+  when: _use_rosa_to_setup_openshift is defined and _use_rosa_to_setup_openshift == True
+
+- name: Provision Self-Managed OpenShift on AWS 
+  include_tasks: provision-self-managed.yml
   loop: "{{ all_config.openshift | default([]) }}"
   loop_control:
     loop_var: _current_openshift_cluster
+  when: _current_openshift_cluster.infrastructure.type == "self-managed"
 
 - name: Configure file storage on AWS
   include_tasks: aws-file-server.yaml

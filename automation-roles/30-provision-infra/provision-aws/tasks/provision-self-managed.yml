@@ -1,0 +1,41 @@
+---
+- name: Validate mandatory variables are defined
+  assert:
+    that:
+      - cloud_platform is defined
+
+- name: Validate cloud_platform is implemented
+  fail: msg="cloud_platform {{ cloud_platform }} is not implemented, current implemented cloud platforms are {{ implemented_cloud_platform_types }} "
+  when: "cloud_platform not in implemented_cloud_platform_types"
+
+- name: Provision AWS VPC Infrastructure
+  block:
+  - name: "Copy variables to aws directory {{status_dir}}/aws"
+    template:
+      src: 'variables.auto.tfvars.j2'
+      dest: '{{status_dir}}/aws/variables.auto.tfvars'
+
+  - name: "Copy terraform.tfvars to aws directory {{status_dir}}/aws"
+    template:
+      src: 'terraform.tfvars.j2'
+      dest: '{{status_dir}}/aws/terraform.tfvars'
+
+  - name: "Copy openshift_pull_secret to aws directory {{status_dir}}/aws"
+    template:
+      src: 'openshift_pull_secret.json.j2'
+      dest: '{{status_dir}}/aws/openshift_pull_secret.json'
+
+  - name: "Run terraform init in aws directory {{status_dir}}/aws"
+    shell: 
+      chdir: '{{status_dir}}/aws'
+      cmd: 'terraform init'
+
+  - name: "Run terraform plan in aws directory {{status_dir}}/aws, check {{status_dir}}/aws/plan.log"
+    shell: |
+      set -o pipefail
+      terraform plan -no-color -detailed-exitcode 2>&1 \
+        | tee {{status_dir}}/aws/plan.log
+    args:
+      chdir: "{{status_dir}}/aws"
+    register: _terraform_plan_result
+    failed_when: "_terraform_plan_result.rc == 1"

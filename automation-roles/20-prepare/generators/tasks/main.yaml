@@ -20,6 +20,25 @@
     state: directory
   when: cloud_platform == 'ibm-cloud'
 
+- name: Delete aws work folder if it exists
+  file:
+    path: '{{status_dir}}/aws'
+    state: absent
+
+- name: Create aws work folder for self-managed openshift on aws
+  block: 
+  - name: Create aws work folder
+    file:
+      path: '{{status_dir}}/aws'
+      state: directory
+
+  - name: Clone terraform-openshift4-aws github repository
+    git:
+      repo: https://github.com/ibm-cloud-architecture/terraform-openshift4-aws.git
+      dest: '{{status_dir}}/aws/'
+      version: 4.6.1
+  when: cloud_platform == 'aws' and _use_rosa_to_setup_openshift is not defined 
+
 - name: Delete vSphere IPI work folder if it already exists
   file:
     path: '{{status_dir}}/vsphere-ipi'
