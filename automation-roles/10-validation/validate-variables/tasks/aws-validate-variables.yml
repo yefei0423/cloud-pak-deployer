@@ -46,17 +46,25 @@
     when: secret_value==""
   when: _use_rosa_to_setup_openshift is defined and _use_rosa_to_setup_openshift == True
   
-- name: Check openshift_pull_secret secret for self-managed openshift
+- name: Check ocp-pullsecret secret for self-managed openshift
   block:
-  - name: Check if openshift_pull_secret secret is in the vault
+  - name: Check if ocp-pullsecret secret is in the vault
     include_role: 
       name: vault-get-secret
     vars:
-      secret_name: "openshift_pull_secret"
+      secret_name: "ocp-pullsecret"
       secret_group: "{{ environment_name }}"
 
-  - name: Check that openshift_pull_secret secret is present in the vault
+  - name: Check that ocp-pullsecret secret is present in the vault
     fail:
-      msg: "Secret openshift_pull_secret is mandatory and was not found in the vault"
+      msg: "Secret ocp-pullsecret is mandatory and was not found in the vault"
     when: secret_value==""
   when: _use_rosa_to_setup_openshift is not defined
+
+- name: Check base_domain in present in openshift config
+  fail:
+    msg: "base_domain is mandatory and was not found in the openshift config"
+  when: _current_openshift_cluster.infrastructure.type == "self-managed" and (_current_openshift_cluster.base_domain is not defined or _current_openshift_cluster.base_domain =="")
+  loop: "{{ all_config.openshift | default([]) }}"
+  loop_control:
+    loop_var: _current_openshift_cluster

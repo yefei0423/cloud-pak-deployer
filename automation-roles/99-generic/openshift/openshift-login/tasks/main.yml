@@ -40,7 +40,10 @@
   when: cloud_platform == 'azure'
 
 - include_tasks: aws-login-rosa-ocp.yml
-  when: cloud_platform == 'aws'
+  when: cloud_platform == 'aws' and _openshift_cluster.infrastructure.type == 'rosa'
+
+- include_tasks: aws-login-self-managed-ocp.yml
+  when: cloud_platform == 'aws' and _openshift_cluster.infrastructure.type == 'self-managed'
 
 - name: Check that we can retrieve cluster information
   shell: |

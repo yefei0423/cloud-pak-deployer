@@ -28,17 +28,17 @@
 - set_fact:
     _aws_secret_access_key: "{{ secret_value }}"
 
-- name:  Get openshift_pull_secret secret from the vault
+- name:  Get ocp-pullsecret secret from the vault
   block:
-  - name: Read openshift_pull_secret secret from the vault
+  - name: Read ocp-pullsecret secret from the vault
     include_role: 
       name: vault-get-secret
     vars:
-      secret_name: "openshift_pull_secret"
+      secret_name: "ocp-pullsecret"
       secret_group: "{{ environment_name }}" 
 
   - set_fact:
-      _openshift_pull_secret: "{{ secret_value }}"
+      _ocp_pullsecret: "{{ secret_value }}"
   when: _use_rosa_to_setup_openshift is not defined
 
 - name: Provision Managed OpenShift on AWS

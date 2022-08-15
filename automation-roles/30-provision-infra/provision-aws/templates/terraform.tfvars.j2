@@ -1,5 +1,5 @@
 cluster_name = "{{environment_name}}"
-base_domain = "example.com"
+base_domain = "{{_current_openshift_cluster.base_domain}}"
 openshift_pull_secret = "./openshift_pull_secret.json"
 openshift_version = "{{_current_openshift_cluster.ocp_version}}"
 
@@ -8,3 +8,11 @@ aws_extra_tags = {
   }
 aws_region = "{{aws_region}}"
 aws_publish_strategy = "External"
+
+{% if _current_openshift_cluster.control_plane_flavour | default("") != "" %}
+aws_master_instance_type="{{_current_openshift_cluster.control_plane_flavour}}"
+{% endif %}
+{% if _current_openshift_cluster.compute_flavour | default("") != "" %}
+aws_worker_instance_type="{{_current_openshift_cluster.compute_flavour}}"
+{% endif %}
+
